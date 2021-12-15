@@ -102,7 +102,7 @@ class Shop(models.Model):
     user = models.OneToOneField(User, verbose_name='Пользователь',
                                 blank=True, null=True,
                                 on_delete=models.CASCADE)
-    state = models.BooleanField(verbose_name='статус получения заказов', default=True)
+    state = models.BooleanField(verbose_name='Статус получения заказов', default=True)
 
     # filename
 
@@ -222,15 +222,11 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = 'Заказ'
-        verbose_name_plural = "Список заказ"
+        verbose_name_plural = "Список заказов"
         ordering = ('-dt',)
 
     def __str__(self):
         return str(self.dt)
-
-    # @property
-    # def sum(self):
-    #     return self.ordered_items.aggregate(total=Sum("quantity"))["total"]
 
 
 class OrderItem(models.Model):
