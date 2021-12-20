@@ -2,10 +2,16 @@ from requests import get
 
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+
 from django.http import JsonResponse
+
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
 from yaml import load, Loader
+
+from app.models import Category
+from app.serializer import CategorySerializer
 
 
 class PartnerPriceLoad(APIView):
@@ -36,4 +42,13 @@ class PartnerPriceLoad(APIView):
                 return JsonResponse({'Status': True})
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+
+class CategoryView(ListAPIView):
+    """
+    Класс для просмотра категорий
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
 
