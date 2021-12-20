@@ -1,9 +1,8 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-# from django_rest_passwordreset.tokens import get_token_generator
+
 
 STATE_CHOICES = (
     ('basket', 'Статус корзины'),
@@ -23,15 +22,9 @@ USER_TYPE_CHOICES = (
 
 
 class UserManager(BaseUserManager):
-    """
-    Миксин для управления пользователями
-    """
     use_in_migrations = True
 
     def _create_user(self, email, password, **extra_fields):
-        """
-        Create and save a user with the given username, email, and password.
-        """
         if not email:
             raise ValueError('The given email must be set')
         email = self.normalize_email(email)
@@ -55,10 +48,9 @@ class UserManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
 
         return self._create_user(email, password, **extra_fields)
-#
-#
 
 
+# определяем новую модель для User
 class User(AbstractUser):
 
     REQUIRED_FIELDS = []
@@ -67,32 +59,15 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     company = models.CharField(verbose_name='Компания', max_length=40, blank=True)
     position = models.CharField(verbose_name='Должность', max_length=40, blank=True)
-    # username_validator = UnicodeUsernameValidator()
-    # username = models.CharField(
-    #     _('username'),
-    #     max_length=150,
-    #     help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
-    #     validators=[username_validator],
-    #     error_messages={
-    #         'unique': _("A user with that username already exists."),
-    #     },
-    # )
-    # is_active = models.BooleanField(
-    #     _('active'),
-    #     default=False,
-    #     help_text=_(
-    #         'Designates whether this user should be treated as active. '
-    #         'Unselect this instead of deleting accounts.'
-    #     ),
-    # )
     type = models.CharField(verbose_name='Тип пользователя', choices=USER_TYPE_CHOICES, max_length=5, default='buyer')
+    username = models.CharField(verbose_name='Имя пользователя', max_length=255)
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
 
     class Meta:
         verbose_name = 'Пользователь'
-        verbose_name_plural = "Список пользователей"
+        verbose_name_plural = "Пользователи"
         ordering = ('email',)
 
 
@@ -104,11 +79,9 @@ class Shop(models.Model):
                                 on_delete=models.CASCADE)
     state = models.BooleanField(verbose_name='Статус получения заказов', default=True)
 
-    # filename
-
     class Meta:
         verbose_name = 'Магазин'
-        verbose_name_plural = "Список магазинов"
+        verbose_name_plural = "Магазины"
         ordering = ('-name',)
 
     def __str__(self):
@@ -121,7 +94,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name = 'Категория'
-        verbose_name_plural = "Список категорий"
+        verbose_name_plural = "Категории"
         ordering = ('-name',)
 
     def __str__(self):
@@ -135,7 +108,7 @@ class Product(models.Model):
 
     class Meta:
         verbose_name = 'Продукт'
-        verbose_name_plural = "Список продуктов"
+        verbose_name_plural = "Продукты"
         ordering = ('-name',)
 
     def __str__(self):
@@ -155,7 +128,7 @@ class ProductInfo(models.Model):
 
     class Meta:
         verbose_name = 'Информация о продукте'
-        verbose_name_plural = "Информационный список о продуктах"
+        verbose_name_plural = "Информация о продуктах"
         constraints = [
             models.UniqueConstraint(fields=['product', 'shop', 'external_id'], name='unique_product_info'),
         ]
@@ -166,7 +139,7 @@ class Parameter(models.Model):
 
     class Meta:
         verbose_name = 'Имя параметра'
-        verbose_name_plural = "Список имен параметров"
+        verbose_name_plural = "Имена параметров"
         ordering = ('-name',)
 
     def __str__(self):
@@ -183,7 +156,7 @@ class ProductParameter(models.Model):
 
     class Meta:
         verbose_name = 'Параметр'
-        verbose_name_plural = "Список параметров"
+        verbose_name_plural = "Параметры"
         constraints = [
             models.UniqueConstraint(fields=['product_info', 'parameter'], name='unique_product_parameter'),
         ]
@@ -204,7 +177,7 @@ class Contact(models.Model):
 
     class Meta:
         verbose_name = 'Контакты пользователя'
-        verbose_name_plural = "Список контактов пользователя"
+        verbose_name_plural = "Контакты пользователей"
 
     def __str__(self):
         return f'{self.city} {self.street} {self.house}'
@@ -222,7 +195,7 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = 'Заказ'
-        verbose_name_plural = "Список заказов"
+        verbose_name_plural = "Заказы"
         ordering = ('-dt',)
 
     def __str__(self):
@@ -240,47 +213,8 @@ class OrderItem(models.Model):
 
     class Meta:
         verbose_name = 'Заказанная позиция'
-        verbose_name_plural = "Список заказанных позиций"
+        verbose_name_plural = "Заказанные позиции"
         constraints = [
             models.UniqueConstraint(fields=['order_id', 'product_info'], name='unique_order_item'),
         ]
 
-#
-# class ConfirmEmailToken(models.Model):
-#     class Meta:
-#         verbose_name = 'Токен подтверждения Email'
-#         verbose_name_plural = 'Токены подтверждения Email'
-#
-#     @staticmethod
-#     def generate_key():
-#         """ generates a pseudo random code using os.urandom and binascii.hexlify """
-#         #return get_token_generator().generate_token()
-#         return
-#
-#     user = models.ForeignKey(
-#         User,
-#         related_name='confirm_email_tokens',
-#         on_delete=models.CASCADE,
-#         verbose_name=_("The User which is associated to this password reset token")
-#     )
-#
-#     created_at = models.DateTimeField(
-#         auto_now_add=True,
-#         verbose_name=_("When was this token generated")
-#     )
-#
-#     # Key field, though it is not the primary key of the model
-#     key = models.CharField(
-#         _("Key"),
-#         max_length=64,
-#         db_index=True,
-#         unique=True
-#     )
-#
-#     def save(self, *args, **kwargs):
-#         if not self.key:
-#             self.key = self.generate_key()
-#         return super(ConfirmEmailToken, self).save(*args, **kwargs)
-#
-#     def __str__(self):
-#         return "Password reset token for user {user}".format(user=self.user)
