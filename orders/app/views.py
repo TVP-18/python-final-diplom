@@ -8,18 +8,18 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 
-from yaml import load, Loader
+import yaml
 
-from app.models import Category
-from app.serializer import CategorySerializer
+from app.models import Category, Shop
+from app.serializer import CategorySerializer, ShopSerializer
 
 
 class PartnerPriceLoad(APIView):
     """
-    Класс для загрузки/обновления прайса от поставщика
+    Загрузка/обновление прайса от поставщика
     """
     def post(self, request, *args, **kwargs):
-        print(request, request.data, request.user)
+
         # проверить аутентификацию пользователя
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'Error': 'Пользователь не зарегистрирован'}, status=403)
@@ -28,32 +28,37 @@ class PartnerPriceLoad(APIView):
         if request.user.type != 'shop':
             return JsonResponse({'Status': False, 'Error': 'Только для магазинов'}, status=403)
 
-        # # получаем файл
-        # url = request.data.get('url')
-        # # print(request, request.data, url)
-        # if url:
-        #     validate_url = URLValidator()
-        #     try:
-        #         validate_url(url)
-        #     except ValidationError as e:
-        #         return JsonResponse({'Status': False, 'Error': str(e)})
-        #     else:
+        # получаем файл
+        url = request.data.get('url')
+
+        if url:
+            validate_url = URLValidator()
+            try:
+                validate_url(url)
+            except ValidationError as e:
+                return JsonResponse({'Status': False, 'Error': str(e)})
+            else:
+                stream = get(url).content
+                print(stream)
+                data = yaml.load(stream, Loader=yaml.Loader)
+                print(data)
         #
-        #         stream = get(url).content
-        #         print(stream)
-        #         data = load(stream, Loader=Loader)
-        #         print(data)
-        #
-        #         return JsonResponse({'Status': True})
+                return JsonResponse({'Status': True})
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
 class CategoryView(ListAPIView):
     """
-    Класс для просмотра категорий
+    Просмотр категорий
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
+class ShopView(ListAPIView):
+    """
+    Просмотр магазинов
+    """
+    queryset = Shop.objects.filter(state=True)
+    serializer_class = ShopSerializer
