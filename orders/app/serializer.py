@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+from rest_framework.fields import CharField
 
 from app.models import Category, Shop, Contact, User
 
@@ -15,3 +17,5 @@ class ShopSerializer(serializers.ModelSerializer):
         model = Shop
         fields = ('id', 'name', 'url', 'state',)
         read_only_fields = ('id',)
+
+
