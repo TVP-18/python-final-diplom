@@ -1,0 +1,16 @@
+# get http://127.0.0.1:8000/api/v1
+
+# get http://127.0.0.1:8000/api/v1/category
+
+# post http://127.0.0.1:8000/api/v1/partner/load
+
+# {
+#     "token": "b39d0f93f9e895b82f1724832b7c186a",
+#     "url": "https://drive.google.com/file/d/1cQXuRD-cfghsUF36fQtX9BoA1yF9ym6_/view?usp=sharing"
+# }
+
+post http://127.0.0.1:8000/api/v1/partner/load
+
+{
+    "token": "b39d0f93f9e895b82f1724832b7c186a"
+}
