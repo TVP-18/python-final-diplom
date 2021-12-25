@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
-from rest_framework.fields import CharField
 
-from app.models import Category, Shop, Contact, User
+from app.models import Category, Shop, Product, ProductInfo, User, Contact, ProductParameter
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -19,3 +17,45 @@ class ShopSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
+        read_only_fields = ('id',)
+        extra_kwargs = {
+            'user': {'write_only': True}
+        }
+
+
+class UserSerializer(serializers.ModelSerializer):
+    contacts = ContactSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'first_name', 'last_name', 'email', 'company', 'position', 'contacts')
+        read_only_fields = ('id',)
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('id', 'name')
+        read_only_fields = ('id',)
+
+
+class ProductParameterSerializer(serializers.ModelSerializer):
+    parameter = serializers.StringRelatedField()
+
+    class Meta:
+        model = ProductParameter
+        fields = ('parameter', 'value',)
+
+
+class ProductInfoSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_parameters = ProductParameterSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = ProductInfo
+        fields = ('id', 'model', 'product', 'shop', 'quantity', 'price', 'price_rrc', 'product_parameters',)
+        read_only_fields = ('id',)
