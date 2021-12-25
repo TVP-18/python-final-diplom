@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.db.models import Q
 from requests import get
 
 from django.contrib.auth.password_validation import validate_password
@@ -7,6 +8,7 @@ from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 
 from django.http import JsonResponse
+from rest_framework.filters import SearchFilter
 
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -18,7 +20,7 @@ from rest_framework.authtoken.models import Token
 import yaml
 
 from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter
-from app.serializer import CategorySerializer, ShopSerializer
+from app.serializer import CategorySerializer, ShopSerializer, UserSerializer
 
 
 # class CategoryViewSet(ModelViewSet):
@@ -92,16 +94,32 @@ class CategoryView(ListAPIView):
     """
     Просмотр категорий
     """
-    queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    # поиск по наименованию категории
+    def get_queryset(self):
+        param = self.request.GET.get('name', None)
+        if param:
+            return Category.objects.filter(name__icontains=param)
+        else:
+            return Category.objects.all()
 
 
 class ShopView(ListAPIView):
     """
-    Просмотр магазинов, только принимающих заказы
+    Просмотр магазинов, принимающих заказы
     """
-    queryset = Shop.objects.filter(state=True)
     serializer_class = ShopSerializer
+
+    # поиск по наименованию магазина
+    def get_queryset(self):
+        param = self.request.GET.get('name', None)
+        query = Q(state=True)
+
+        if param:
+            query = query & Q(name__icontains=param)
+
+        return Shop.objects.filter(query)
 
 
 class UserLogin(APIView):
@@ -125,56 +143,62 @@ class UserLogin(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
-# class UserRegister(APIView):
+class UserRegister(APIView):
+    """
+    Регистрация покупателя
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        # проверяем обязательные аргументы
+        if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(request.data):
+            # проверяем пароль
+            try:
+                validate_password(request.data['password'])
+            except Exception as password_error:
+                list_error = []
+                for item in password_error:
+                    list_error.append(item)
+                return JsonResponse({'Status': False, 'Errors': {'password': list_error}})
+            else:
+                # проверяем структуру
+                user_serializer = UserSerializer(data=request.data)
+                if user_serializer.is_valid():
+
+                    # сохраняем пользователя
+                    user = user_serializer.save()
+                    user.set_password(request.data['password'])
+                    user.save()
+
+                    return JsonResponse({'Status': True})
+                else:
+                    return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+
+# class ProductInfoView(APIView):
 #     """
-#     Регистрация покупателя
+#     Список позиций
 #     """
+#     def get(self, request, *args, **kwargs):
 #
-#     def post(self, request, *args, **kwargs):
+#         query = Q(shop__state=True)
+#         shop_id = request.query_params.get('shop_id')
+#         category_id = request.query_params.get('category_id')
 #
-#         # проверяем обязательные аргументы
-#         if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(request.data):
-#             errors = {}
+#         if shop_id:
+#             query = query & Q(shop_id=shop_id)
 #
-#             # проверяем пароль
+#         if category_id:
+#             query = query & Q(product__category_id=category_id)
 #
-#             try:
-#                 validate_password(request.data['password'])
-#             except Exception as password_error:
-#                 return JsonResponse({'Status': False, 'Errors': {'password': 'должно быть описание ошибок'}})
-#             else:
-#         #     user_serializer = UserSerializer(data=request.data)
-#         #     if user_serializer.is_valid():
-#         #         # сохраняем пользователя
-#         #         user = user_serializer.save()
-#         #         user.set_password(request.data['password'])
-#         #         user.save()
-#         #         new_user_registered.send(sender=self.__class__, user_id=user.id)
-#         #         return JsonResponse({'Status': True})
-#         #     else:
-#         #         return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+#         # фильтруем и отбрасываем дуликаты
+#         queryset = ProductInfo.objects.filter(
+#             query).select_related(
+#             'shop', 'product__category').prefetch_related(
+#             'product_parameters__parameter').distinct()
 #
-#             # try:
-#             #     validate_password(request.data['password'])
-#             # except Exception as password_error:
-#             #     error_array = []
-#             #     # noinspection PyTypeChecker
-#             #     for item in password_error:
-#             #         error_array.append(item)
-#             #     return JsonResponse({'Status': False, 'Errors': {'password': error_array}})
-#             # else:
-#             #     # проверяем данные для уникальности имени пользователя
-#             #     request.data._mutable = True
-#             #     request.data.update({})
-#             #     user_serializer = UserSerializer(data=request.data)
-#             #     if user_serializer.is_valid():
-#             #         # сохраняем пользователя
-#             #         user = user_serializer.save()
-#             #         user.set_password(request.data['password'])
-#             #         user.save()
-#             #         new_user_registered.send(sender=self.__class__, user_id=user.id)
-#             #         return JsonResponse({'Status': True})
-#             #     else:
-#             #         return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+#         serializer = ProductInfoSerializer(queryset, many=True)
 #
-#         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+#         return Response(serializer.data)
