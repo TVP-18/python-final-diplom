@@ -9,7 +9,7 @@ from app.models import User, Shop, Category, Product, ProductInfo, Parameter, Pr
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     """
-    Панель управления пользователями
+    Управление пользователями
     """
     model = User
 
@@ -21,7 +21,18 @@ class CustomUserAdmin(UserAdmin):
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
+
     list_display = ('email', 'first_name', 'last_name', 'is_staff')
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2'),
+        }),
+    )
+    search_fields = ('email',)
+    ordering = ('email',)
+    filter_horizontal = ()
 
 
 @admin.register(Shop)
