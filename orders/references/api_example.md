@@ -40,9 +40,12 @@ Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
 200 OK
 ```
 
-#### Список магазинов, предоставляющих услуги
+#### Список категорий
 ```
-GET /api/v1/category?name=ар
+GET /api/v1/category
+
+Возможен поиск по наименованию - задать параметр search 
+GET /api/v1/category?search=смарт
 
 200 OK
 [
@@ -56,9 +59,26 @@ GET /api/v1/category?name=ар
     }
 ]
 ```
-#### Список категорий
+#### Список магазинов, предоставляющих услуги
 ```
-GET /api/v1/category?name=связ
+GET /api/v1/shop
+
+Возможен поиск по наименованию - задать параметр search 
+GET /api/v1/shop?search=связ
+
+200 OK
+[
+    {
+        "id": 1,
+        "name": "Связной",
+        "url": null,
+        "state": true
+    }
+]
+```
+#### Список продуктов
+```
+GET /api/v1/product?shop_id=123&category_id=987
 
 200 OK
 [

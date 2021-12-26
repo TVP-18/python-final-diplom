@@ -1,18 +1,16 @@
 from django.contrib.auth import authenticate
 from django.db.models import Q
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 from requests import get
 
 from django.contrib.auth.password_validation import validate_password
 
-from django.core.validators import URLValidator
-from django.core.exceptions import ValidationError
-
 from django.http import JsonResponse
-from rest_framework.filters import SearchFilter
+from rest_framework.response import Response
 
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-# from rest_framework.viewsets import ModelViewSet
 
 
 from rest_framework.authtoken.models import Token
@@ -20,23 +18,7 @@ from rest_framework.authtoken.models import Token
 import yaml
 
 from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter
-from app.serializer import CategorySerializer, ShopSerializer, UserSerializer
-
-
-# class CategoryViewSet(ModelViewSet):
-#     """
-#     Просмотр категорий
-#     """
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-#
-#
-# class ShopViewSet(ModelViewSet):
-#     """
-#     Просмотр магазинов
-#     """
-#     queryset = Shop.objects.filter(state=True)
-#     serializer_class = ShopSerializer
+from app.serializer import CategorySerializer, ShopSerializer, UserSerializer, ProductInfoSerializer
 
 
 class PartnerPriceLoad(APIView):
@@ -94,32 +76,40 @@ class CategoryView(ListAPIView):
     """
     Просмотр категорий
     """
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-    # поиск по наименованию категории
-    def get_queryset(self):
-        param = self.request.GET.get('name', None)
-        if param:
-            return Category.objects.filter(name__icontains=param)
-        else:
-            return Category.objects.all()
+    search_fields = ["name"]
+
+    # filterset_fields = ['name']
+    # # поиск по наименованию категории
+    # def get_queryset(self):
+    #     param = self.request.GET.get('name', None)
+    #     if param:
+    #         return Category.objects.filter(name__icontains=param)
+    #     else:
+    #         return Category.objects.all()
 
 
 class ShopView(ListAPIView):
     """
     Просмотр магазинов, принимающих заказы
     """
+    queryset = Shop.objects.filter(state=True)
     serializer_class = ShopSerializer
 
-    # поиск по наименованию магазина
-    def get_queryset(self):
-        param = self.request.GET.get('name', None)
-        query = Q(state=True)
+    search_fields = ['name']
 
-        if param:
-            query = query & Q(name__icontains=param)
-
-        return Shop.objects.filter(query)
+    # filterset_fields = ['name']
+    # # поиск по наименованию магазина
+    # def get_queryset(self):
+    #     param = self.request.GET.get('name', None)
+    #     query = Q(state=True)
+    #
+    #     if param:
+    #         query = query & Q(name__icontains=param)
+    #
+    #     return Shop.objects.filter(query)
 
 
 class UserLogin(APIView):
@@ -177,28 +167,32 @@ class UserRegister(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
+class ProductInfoView(ListAPIView):
+    serializer_class = ProductInfoSerializer
+    queryset = ProductInfo.objects.all()
 # class ProductInfoView(APIView):
 #     """
-#     Список позиций
+#     Список продуктов
 #     """
-#     def get(self, request, *args, **kwargs):
 #
-#         query = Q(shop__state=True)
-#         shop_id = request.query_params.get('shop_id')
-#         category_id = request.query_params.get('category_id')
-#
-#         if shop_id:
-#             query = query & Q(shop_id=shop_id)
-#
-#         if category_id:
-#             query = query & Q(product__category_id=category_id)
-#
-#         # фильтруем и отбрасываем дуликаты
-#         queryset = ProductInfo.objects.filter(
-#             query).select_related(
-#             'shop', 'product__category').prefetch_related(
-#             'product_parameters__parameter').distinct()
-#
-#         serializer = ProductInfoSerializer(queryset, many=True)
-#
-#         return Response(serializer.data)
+    # def get(self, request, *args, **kwargs):
+    #
+    #     query = Q(shop__state=True)
+    #     shop_id = request.query_params.get('shop_id')
+    #     category_id = request.query_params.get('category_id')
+    #
+    #     if shop_id:
+    #         query = query & Q(shop_id=shop_id)
+    #
+    #     if category_id:
+    #         query = query & Q(product__category_id=category_id)
+    #
+    #     # фильтруем и отбрасываем дуликаты
+    #     queryset = ProductInfo.objects.filter(
+    #         query).select_related(
+    #         'shop', 'product__category').prefetch_related(
+    #         'product_parameters__parameter').distinct()
+    #
+    #     serializer = ProductInfoSerializer(queryset, many=True)
+    #
+    #     return Response(serializer.data)
