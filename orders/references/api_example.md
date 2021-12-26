@@ -83,7 +83,7 @@ GET /api/v1/product
 Поиск по наименованию или модели - задать параметр search 
 GET /api/v1/product?search=xr
 
-Фильтр по магазину и категории
+Фильтр по магазину и категории - задать параметры shop_id и category_id
 GET /api/v1/product?shop_id=123&category_id=987
 
 200 OK
@@ -117,6 +117,53 @@ GET /api/v1/product?shop_id=123&category_id=987
                 "value": "золотистый"
             }
         ]
+    }
+]
+```
+#### Поставщик - отображение заказов
+```
+GET /api/v1/partner/orders
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+
+200 OK
+[
+    {
+        "id": 2,
+        "ordered_items": [
+            {
+                "id": 3,
+                "product_info": 3,
+                "quantity": 1
+            }
+        ],
+        "state": "new",
+        "dt": "2021-12-26T07:01:08.683656Z"
+    }
+]
+```
+#### Покупатель - отображение корзины
+```
+GET /api/v1/user/basket
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+
+200 OK
+[
+    {
+        "id": 1,
+        "ordered_items": [
+            {
+                "id": 1,
+                "product_info": 1,
+                "quantity": 2
+            },
+            {
+                "id": 2,
+                "product_info": 2,
+                "quantity": 1
+            }
+        ],
+        "state": "basket",
+        "dt": "2021-12-26T06:26:22.390546Z"
     }
 ]
 ```

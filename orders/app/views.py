@@ -17,8 +17,9 @@ from rest_framework.authtoken.models import Token
 
 import yaml
 
-from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter
-from app.serializer import CategorySerializer, ShopSerializer, UserSerializer, ProductInfoSerializer
+from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter, Order, OrderItem
+from app.serializer import CategorySerializer, ShopSerializer, UserSerializer, ProductInfoSerializer, \
+    OrderSerializer, OrderItemSerializer
 
 
 class PartnerPriceLoad(APIView):
@@ -29,7 +30,7 @@ class PartnerPriceLoad(APIView):
 
         # проверить аутентификацию пользователя
         if not request.user.is_authenticated:
-            return JsonResponse({'Status': False, 'Error': 'Пользователь не зарегистрирован'}, status=403)
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
 
         # проверить права пользователя, доступно только для магазинов
         if request.user.type != 'shop':
@@ -81,15 +82,6 @@ class CategoryView(ListAPIView):
 
     search_fields = ["name"]
 
-    # filterset_fields = ['name']
-    # # поиск по наименованию категории
-    # def get_queryset(self):
-    #     param = self.request.GET.get('name', None)
-    #     if param:
-    #         return Category.objects.filter(name__icontains=param)
-    #     else:
-    #         return Category.objects.all()
-
 
 class ShopView(ListAPIView):
     """
@@ -99,17 +91,6 @@ class ShopView(ListAPIView):
     serializer_class = ShopSerializer
 
     search_fields = ['name']
-
-    # filterset_fields = ['name']
-    # # поиск по наименованию магазина
-    # def get_queryset(self):
-    #     param = self.request.GET.get('name', None)
-    #     query = Q(state=True)
-    #
-    #     if param:
-    #         query = query & Q(name__icontains=param)
-    #
-    #     return Shop.objects.filter(query)
 
 
 class ProductInfoView(ListAPIView):
@@ -193,4 +174,46 @@ class UserRegister(APIView):
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
+
+class PartnerOrdersView(APIView):
+    """
+    Отображение заказов для поставщика
+    """
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        if request.user.type != 'shop':
+            return JsonResponse({'Status': False, 'Error': 'Только для магазинов'}, status=403)
+
+        order = Order.objects.filter(
+            ordered_items__product_info__shop__user_id=request.user.id).exclude(state='basket').prefetch_related(
+            'ordered_items__product_info__product__category')
+
+        serializer = OrderSerializer(order, many=True)
+        return Response(serializer.data)
+
+
+class BasketView(APIView):
+    """
+    Работа с корзиной для покупателя
+    """
+
+    # отобразить корзину
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+        basket = Order.objects.filter(
+            user_id=request.user.id, state='basket').prefetch_related(
+            'ordered_items__product_info__product__category')
+
+        serializer = OrderSerializer(basket, many=True)
+        return Response(serializer.data)
+
+    # создать корзину
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        pass
 
