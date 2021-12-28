@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.core.validators import RegexValidator
 from django.db.models import Q
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,9 +18,9 @@ from rest_framework.authtoken.models import Token
 
 import yaml
 
-from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter, Order, OrderItem
+from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter, Order, OrderItem, Contact
 from app.serializer import CategorySerializer, ShopSerializer, UserSerializer, ProductInfoSerializer, \
-    OrderSerializer, OrderItemSerializer
+    OrderSerializer, OrderItemSerializer, ContactSerializer
 
 
 class PartnerPriceLoad(APIView):
@@ -217,3 +218,69 @@ class BasketView(APIView):
 
         pass
 
+
+class ContactView(APIView):
+    """
+    Работа с контактами
+    """
+    # получить все контакты
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+        contact = Contact.objects.filter(user_id=request.user.id)
+        serializer = ContactSerializer(contact, many=True)
+        return Response(serializer.data)
+
+    # добавить контакт
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        if {'city', 'street', 'house', 'phone'}.issubset(request.data):
+            request.data._mutable = True
+            request.data.update({'user': request.user.id})
+            serializer = ContactSerializer(data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return JsonResponse({'Status': False, 'Errors': serializer.errors})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+    # удалить контакт
+    def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        contact_id = request.data.get('id')
+
+        if contact_id:
+            if contact_id.isdigit():
+                Contact.objects.filter(Q(user_id=request.user.id, id=contact_id)).delete()
+                return JsonResponse({'Status': True})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+    # # редактировать контакт
+    # def put(self, request, *args, **kwargs):
+    #     if not request.user.is_authenticated:
+    #         return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+    #
+    #     if 'id' in request.data:
+    #         if request.data['id'].isdigit():
+    #             contact = Contact.objects.filter(id=request.data['id'], user_id=request.user.id)
+    #
+    #             if contact:
+    #                 request.data._mutable = True
+    #                 request.data.update({'user': request.user.id})
+    #                 serializer = ContactSerializer(contact, data=request.data, partial=True)
+    #
+    #                 if serializer.is_valid():
+    #                     serializer.save()
+    #                     return Response(serializer.data)
+    #                 else:
+    #                     return JsonResponse({'Status': False, 'Errors': serializer.errors})
+    #
+    #     return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})

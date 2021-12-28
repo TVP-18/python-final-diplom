@@ -1,3 +1,6 @@
+import re
+
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 
 from app.models import Category, Shop, Product, ProductInfo, User, Contact, ProductParameter, OrderItem, Order
@@ -18,6 +21,8 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class ContactSerializer(serializers.ModelSerializer):
+
+
     class Meta:
         model = Contact
         fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
@@ -25,6 +30,26 @@ class ContactSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'user': {'write_only': True}
         }
+
+    # проверим формат телефона
+    def validate_phone(self, value):
+        if not re.match(r'^\+\d{1,11}\(\d{3}\)\d{7}', value):
+            raise serializers.ValidationError("Неверный формат номера телефона, формат "
+                                              "+<код страны>(<код оператора>)<номер> +7(123)1234567")
+
+        return value
+
+    # проверим количество контактов, должно быть не больше 5
+    def validate(self, attrs):
+
+        print(self)
+        print(attrs)
+
+        list_contact = Contact.objects.filter(user=self.initial_data['user'])
+
+        if len(list_contact) >= 5:
+            raise serializers.ValidationError("Превышен лимит контактов, не может быть больше 5")
+        return attrs
 
 
 class UserSerializer(serializers.ModelSerializer):

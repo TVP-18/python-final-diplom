@@ -28,6 +28,60 @@ POST /api/v1/user/login
     "token": "b39d0f93f9e895b82f1724832b7c186a",
 }
 ```
+#### Контакты - отображение контактов пользователя
+```
+GET /api/v1/user/contact
+
+200 OK
+[
+    {
+        "id": 1,
+        "city": "Город 1",
+        "street": "Улица 1",
+        "house": "1",
+        "structure": "1",
+        "building": "1",
+        "apartment": "1",
+        "phone": "11111111"
+    }
+]
+```
+#### Контакты - добавление контакта
+```
+POST /api/v1/user/contact
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+    {
+        "city": "Город 1",
+        "street": "Улица 1",
+        "house": "1",
+        "structure": "1",
+        "building": "1",
+        "apartment": "1",
+        "phone": "11111111"
+    }
+    
+200 OK
+{
+    "id": 8,
+    "city": "Город 3",
+    "street": "Улица 3",
+    "house": "3",
+    "structure": "3",
+    "building": "3",
+    "apartment": "3",
+    "phone": "+8(123)8889977"
+}
+```
+#### Контакты - удаление контакта
+```
+DELETE /api/v1/user/contact
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+    {
+        "id": 1
+    }
+    
+200 OK
+```
 
 #### Обновление прайса поставщиком
 ```
