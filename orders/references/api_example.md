@@ -60,7 +60,7 @@ Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
         "phone": "11111111"
     }
     
-200 OK
+201 OK
 {
     "id": 8,
     "city": "Город 3",
@@ -70,6 +70,33 @@ Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
     "building": "3",
     "apartment": "3",
     "phone": "+8(123)8889977"
+}
+```
+#### Контакты - редактирование контакта
+```
+PUT /api/v1/user/contact
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+    {
+        "id": "1",
+        "city": "Город 2",
+        "street": "Улица 2",
+        "house": "2",
+        "structure": "2",
+        "building": "2",
+        "apartment": "2",
+        "phone": "+88(123)1234567"
+    }
+    
+200 OK
+{
+    "id": "1",
+    "city": "Город 2",
+    "street": "Улица 2",
+    "house": "2",
+    "structure": "2",
+    "building": "2",
+    "apartment": "2",
+    "phone": "+88(123)1234567"
 }
 ```
 #### Контакты - удаление контакта
