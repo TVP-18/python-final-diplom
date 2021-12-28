@@ -42,9 +42,6 @@ class ContactSerializer(serializers.ModelSerializer):
     # проверим количество контактов, должно быть не больше 5
     def validate(self, attrs):
 
-        print(self)
-        print(attrs)
-
         list_contact = Contact.objects.filter(user=self.initial_data['user'])
 
         if len(list_contact) >= 5:

@@ -243,9 +243,31 @@ class ContactView(APIView):
 
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data)
+                return Response(serializer.data, status=201)
             else:
                 return JsonResponse({'Status': False, 'Errors': serializer.errors})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+    # редактировать контакт
+    def put(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        if 'id' in request.data:
+            if request.data['id'].isdigit():
+                contact = Contact.objects.filter(id=request.data['id'], user_id=request.user.id).first()
+
+                if contact:
+                    request.data._mutable = True
+                    request.data.update({'user': request.user.id})
+                    serializer = ContactSerializer(contact, data=request.data, partial=True)
+
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    else:
+                        return JsonResponse({'Status': False, 'Errors': serializer.errors})
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
@@ -263,24 +285,3 @@ class ContactView(APIView):
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
-    # # редактировать контакт
-    # def put(self, request, *args, **kwargs):
-    #     if not request.user.is_authenticated:
-    #         return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
-    #
-    #     if 'id' in request.data:
-    #         if request.data['id'].isdigit():
-    #             contact = Contact.objects.filter(id=request.data['id'], user_id=request.user.id)
-    #
-    #             if contact:
-    #                 request.data._mutable = True
-    #                 request.data.update({'user': request.user.id})
-    #                 serializer = ContactSerializer(contact, data=request.data, partial=True)
-    #
-    #                 if serializer.is_valid():
-    #                     serializer.save()
-    #                     return Response(serializer.data)
-    #                 else:
-    #                     return JsonResponse({'Status': False, 'Errors': serializer.errors})
-    #
-    #     return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
