@@ -248,3 +248,59 @@ Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
     }
 ]
 ```
+#### Покупатель - доюавление позиций в корзине
+```
+POST /api/v1/user/basket
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+{
+    "ordered_items": [
+                {
+                    "product_info": 1,
+                    "quantity": 2
+                }
+            ]
+}
+
+200 OK
+{
+  "Status": true,
+  "Создано позиций": 1
+}
+```
+#### Покупатель - удаление позиций из корзины
+```
+DELETE /api/v1/user/basket
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+{
+    "ordered_items": [
+                {
+                    "product_info": 1 
+                }
+            ]
+}
+
+200 OK
+{
+  "Status": true,
+  "Удалено позиций": 1
+}
+```
+#### Покупатель - редактирование позиций в корзине
+```
+PUT /api/v1/user/basket
+Authorization: Token 05b0897fc95950b403f0f81330d3fdb63c4ab960
+{
+    "ordered_items": [
+                {
+                    "product_info": 1,
+                    "quantity": 5
+                }
+            ]
+}
+
+200 OK
+{
+  "Status": true,
+  "Обновлено позиций": 1
+}
+```
