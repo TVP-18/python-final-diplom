@@ -1,18 +1,14 @@
 from django.contrib.auth import authenticate
-from django.core.validators import RegexValidator
+
 from django.db.models import Q
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from requests import get
 
 from django.contrib.auth.password_validation import validate_password
 
 from django.http import JsonResponse
-from rest_framework.response import Response
 
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-
 
 from rest_framework.authtoken.models import Token
 
@@ -211,12 +207,74 @@ class BasketView(APIView):
         serializer = OrderSerializer(basket, many=True)
         return Response(serializer.data)
 
-    # создать корзину
+    # добавить позицию в корзину
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
 
-        pass
+        items = request.data.get('ordered_items')
+
+        if items:
+            basket, created = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+
+            objects_created = 0
+            for item in items:
+
+                exists_item = OrderItem.objects.filter(order=basket.id, product_info=item["product_info"])
+                if len(exists_item) > 0:
+                    return JsonResponse({'Status': False, 'Errors': f'Позиция product_info={item["product_info"]}'
+                                                                    f' уже есть в корзине'})
+
+                item.update({'order': basket.id})
+                serializer = OrderItemSerializer(data=item)
+                if serializer.is_valid():
+                    serializer.save()
+                    objects_created += 1
+                else:
+                    return JsonResponse({'Status': False, 'Errors': serializer.errors})
+
+            return JsonResponse({'Status': True, 'Создано позиций': objects_created})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+    # удалить позиции из корзины
+    def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        items = request.data.get('ordered_items')
+
+        if items:
+            basket, created = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+
+            query = Q()
+            for item in items:
+                query = query | Q(order_id=basket.id, product_info=item["product_info"])
+
+            deleted_count = OrderItem.objects.filter(query).delete()[0]
+
+            return JsonResponse({'Status': True, 'Удалено позиций': deleted_count})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+    # редактировать позиции в корзине
+    def put(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        items = request.data.get('ordered_items')
+
+        if items:
+            basket, created = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+
+            objects_updated = 0
+            for item in items:
+                objects_updated += OrderItem.objects.filter(order_id=basket.id, product_info=item['product_info']).\
+                    update(quantity=item['quantity'])
+
+                return JsonResponse({'Status': True, 'Обновлено объектов': objects_updated})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
 class ContactView(APIView):
