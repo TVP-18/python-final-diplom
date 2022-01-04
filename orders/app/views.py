@@ -343,3 +343,42 @@ class ContactView(APIView):
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
+
+class OrderView(APIView):
+    """
+    Заказы покупателя
+    """
+
+    # получить мои заказы
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        order = Order.objects.filter(
+            user_id=request.user.id).exclude(state='basket').prefetch_related(
+            'ordered_items__product_info__product__category',
+            'ordered_items__product_info__product_parameters__parameter').select_related('contact').distinct()
+
+        serializer = OrderSerializer(order, many=True)
+
+        return Response(serializer.data)
+
+    # сделать новый заказ из корзины
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Только для зарегистрированных пользователей'}, status=403)
+
+        id_order = request.data['id']
+
+        if id_order:
+
+            data = Order.objects.filter(id=id_order, user=request.user.id, state='basket')
+
+            if len(data) == 0:
+                return JsonResponse({'Status': False, 'Errors': 'Не найдена корзина пользователя'})
+
+            data.update(state='new')
+
+            return JsonResponse({'Status': True})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
