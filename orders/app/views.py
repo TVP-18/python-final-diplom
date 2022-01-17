@@ -16,7 +16,7 @@ import yaml
 
 from app.models import Category, Shop, ProductInfo, Product, Parameter, ProductParameter, Order, OrderItem, Contact
 from app.serializer import CategorySerializer, ShopSerializer, UserSerializer, ProductInfoSerializer, \
-    OrderSerializer, OrderItemSerializer, ContactSerializer
+    OrderSerializer, OrderItemSerializer, ContactSerializer, ContactSerializerCreate
 
 
 class PartnerPriceLoad(APIView):
@@ -297,7 +297,7 @@ class ContactView(APIView):
         if {'city', 'street', 'house', 'phone'}.issubset(request.data):
             request.data._mutable = True
             request.data.update({'user': request.user.id})
-            serializer = ContactSerializer(data=request.data)
+            serializer = ContactSerializerCreate(data=request.data)
 
             if serializer.is_valid():
                 serializer.save()

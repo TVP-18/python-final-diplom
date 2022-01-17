@@ -1,6 +1,7 @@
 import re
 
-from django.core.validators import RegexValidator
+from django.conf import settings
+
 from rest_framework import serializers
 
 from app.models import Category, Shop, Product, ProductInfo, User, Contact, ProductParameter, OrderItem, Order
@@ -22,7 +23,6 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class ContactSerializer(serializers.ModelSerializer):
 
-
     class Meta:
         model = Contact
         fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
@@ -39,13 +39,16 @@ class ContactSerializer(serializers.ModelSerializer):
 
         return value
 
-    # проверим количество контактов, должно быть не больше 5
+
+class ContactSerializerCreate(ContactSerializer):
+    # проверим количество контактов, должно быть не больше LIMIT_CONTACTS (указываетс в settings)
     def validate(self, attrs):
 
         list_contact = Contact.objects.filter(user=self.initial_data['user'])
 
-        if len(list_contact) >= 5:
-            raise serializers.ValidationError("Превышен лимит контактов, не может быть больше 5")
+        if len(list_contact) >= settings.LIMIT_CONTACTS:
+            raise serializers.ValidationError(f"Превышен лимит контактов, не может быть больше "
+                                              f"{settings.LIMIT_CONTACTS}")
         return attrs
 
 

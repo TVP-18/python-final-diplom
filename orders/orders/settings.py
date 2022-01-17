@@ -129,6 +129,9 @@ REST_FRAMEWORK = {
                                 'django_filters.rest_framework.DjangoFilterBackend', ]
 }
 
+LIMIT_CONTACTS = 6
+
+
 try:
     from .settings_local import *
 except ImportError:
