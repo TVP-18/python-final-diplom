@@ -126,7 +126,16 @@ STATIC_URL = '/static/'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.TokenAuthentication', ],
     'DEFAULT_FILTER_BACKENDS': ['rest_framework.filters.SearchFilter',
-                                'django_filters.rest_framework.DjangoFilterBackend', ]
+                                'django_filters.rest_framework.DjangoFilterBackend', ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '20/minute',
+        'anon': '10/minute',
+    }
+
 }
 
 LIMIT_CONTACTS = 6
