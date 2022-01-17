@@ -134,8 +134,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': '20/minute',
         'anon': '10/minute',
-    }
-
+    },
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
 
 LIMIT_CONTACTS = 6
