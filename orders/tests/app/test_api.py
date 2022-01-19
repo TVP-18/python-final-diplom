@@ -1,7 +1,8 @@
 import pytest
 from django.urls import reverse
 
-from app.models import Category, Shop, Contact
+from app.models import Category, Shop, Contact, User
+from rest_framework.authtoken.models import Token
 
 
 @pytest.mark.django_db
@@ -38,3 +39,55 @@ def test_contact_post_by_anonymous_user(api_client):
     url = reverse('app:user-contact')
     response = api_client.post(url, data=payload)
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_basket_get_by_anonymous_user(api_client):
+    """
+    Анонимный пользователь пытается посмотреть корзину
+    """
+    url = reverse('app:user-basket')
+    response = api_client.get(url)
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_basket_post_by_anonymous_user(api_client):
+    """
+    Анонимный пользователь пытается добавить позицию в корзину
+    """
+    payload = {"ordered_items": [{"product_info": 1, "quantity": 2}]}
+
+    url = reverse('app:user-basket')
+    response = api_client.post(url, data=payload)
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_basket_post_by_user(api_client):
+    """
+    Авторизованный пользователь пытается добавить позицию в корзину
+    """
+    payload = {"ordered_items": [{"product_info": 1, "quantity": 2}]}
+
+    user = User.objects.create_user('user_test@test.com', 'qwerty', is_active=True)
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+    url = reverse('app:user-basket')
+    response = api_client.post(url, data=payload)
+    assert response.status_code == 200
+
+
+# @pytest.mark.django_db
+# def test_contact_post_by_user(api_client):
+#     #     """
+#     #     Обычный пользователь пытается добавить новый контакт
+#     #     """
+#     payload = {"city": "Мой город", "street": "Моя улица", "house": "15", "structure": "2",
+#                "building": "42", "apartment": "111", "phone": "+7(987)1234567"}
+#     user = User.objects.create_user('user_test@test.com', 'qwerty', is_active=True)
+#     token = Token.objects.create(user=user)
+#     api_client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+#     url = reverse('app:user-contact')
+#     response = api_client.post(url, data=payload)
+#     assert response.status_code == 201
