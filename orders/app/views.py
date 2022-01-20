@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from rest_framework.authtoken.models import Token
 
@@ -70,7 +71,54 @@ class PartnerPriceLoad(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
-class CategoryView(ListAPIView):
+# class CategoryView(ListAPIView):
+#     """
+#     Просмотр категорий
+#     """
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#
+#     search_fields = ["name"]
+#
+#
+# class ShopView(ListAPIView):
+#     """
+#     Просмотр магазинов, принимающих заказы
+#     """
+#     queryset = Shop.objects.filter(state=True)
+#     serializer_class = ShopSerializer
+#
+#     search_fields = ['name']
+#
+#
+# class ProductInfoView(ListAPIView):
+#     """
+#     Список продуктов
+#     """
+#     serializer_class = ProductInfoSerializer
+#
+#     search_fields = ['product__name', 'model']
+#
+#     def get_queryset(self):
+#         query = Q(shop__state=True)
+#
+#         shop_id = self.request.GET.get('shop_id', None)
+#         category_id = self.request.GET.get('category_id', None)
+#
+#         if shop_id:
+#             query = query & Q(shop_id=shop_id)
+#
+#         if category_id:
+#             query = query & Q(product__category_id=category_id)
+#
+#         queryset = ProductInfo.objects.filter(query).select_related(
+#             'shop', 'product__category').prefetch_related(
+#             'product_parameters__parameter').distinct()
+#
+#         return queryset
+
+
+class CategoryView(ReadOnlyModelViewSet):
     """
     Просмотр категорий
     """
@@ -80,7 +128,7 @@ class CategoryView(ListAPIView):
     search_fields = ["name"]
 
 
-class ShopView(ListAPIView):
+class ShopView(ReadOnlyModelViewSet):
     """
     Просмотр магазинов, принимающих заказы
     """
@@ -90,9 +138,9 @@ class ShopView(ListAPIView):
     search_fields = ['name']
 
 
-class ProductInfoView(ListAPIView):
+class ProductInfoView(ReadOnlyModelViewSet):
     """
-    Список продуктов
+    Просмотр продуктов
     """
     serializer_class = ProductInfoSerializer
 
